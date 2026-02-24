@@ -41,8 +41,10 @@ public class Maze {
     private final int    stepSize   = 4;
     private Pane pane;
     private Timeline autoTimeline;
+    private Car car;
 
-    public Maze(String mazeFileName, String playerFileName) {
+    public Maze(String mazeFileName, String playerFileName)
+    {
         InputStream mazeStream = getClass().getResourceAsStream(IMAGE_BASE_PATH + mazeFileName);
         if (mazeStream == null) throw new RuntimeException(mazeFileName + " not found in resources!");
         mazeImage = new Image(mazeStream);
@@ -51,23 +53,32 @@ public class Maze {
         gc     = canvas.getGraphicsContext2D();
         pane   = new Pane(canvas);
 
-        if (mazeFileName.equals("maze.png")) {
+        // Choose spawn + end based on which maze image
+        if (mazeFileName.equals("maze.png"))
+        {
             playerX = MAZE1_SPAWN_X; playerY = MAZE1_SPAWN_Y;
             endX    = MAZE1_END_X;   endY    = MAZE1_END_Y;
-        } else {
+        }
+        else
+        {
             playerX = MAZE2_SPAWN_X; playerY = MAZE2_SPAWN_Y;
             endX    = MAZE2_END_X;   endY    = MAZE2_END_Y;
         }
 
-        if (playerFileName != null) {
-            InputStream rs = getClass().getResourceAsStream(IMAGE_BASE_PATH + playerFileName);
-            if (rs == null) throw new RuntimeException(playerFileName + " not found in resources!");
+        if (playerFileName != null)
+        {
+            InputStream rs = getClass().getResourceAsStream(IMAGE_BASE_PATH + playerFileName);            if (rs == null) throw new RuntimeException(playerFileName + " not found in resources!");
             robotImage = new Image(rs);
+            car = null;
+        }
+        else
+        {
+            robotImage = null;
+            car = new Car(playerX, playerY, playerSize * 2.2, playerSize * 1.3);
         }
 
         draw();
     }
-
     public Pane   getPane()        { return pane; }
     public Image  getMazeImage()   { return mazeImage; }
     public double getPlayerX()     { return playerX; }
@@ -97,6 +108,11 @@ public class Maze {
         double nextY = playerY + dy * stepSize;
         playerX = nextX;
         playerY = nextY;
+        if (car != null)
+        {
+            car.setPosition(playerX, playerY);
+            car.updateAngle(dx * stepSize, dy * stepSize);
+        }
         draw();
     }
 
@@ -123,6 +139,9 @@ public class Maze {
         // Player
         if (robotImage != null) {
             target.drawImage(robotImage, px, py, playerSize, playerSize);
+        } else if (car != null) {
+            car.setPosition(px, py);
+            car.draw(target);
         }
     }
 }

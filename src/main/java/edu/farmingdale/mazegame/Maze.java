@@ -44,8 +44,10 @@ public class Maze {
     private final int    stepSize   = 4;
     private Pane pane;
     private Timeline autoTimeline;
+    private boolean showEndPoint = false;
 
-    public Maze(String mazeFileName, String playerFileName) {
+    public Maze(String mazeFileName, String playerFileName)
+    {
         InputStream mazeStream = getClass().getResourceAsStream("/" + mazeFileName);
         if (mazeStream == null) throw new RuntimeException(mazeFileName + " not found in resources!");
         mazeImage = new Image(mazeStream);
@@ -81,6 +83,11 @@ public class Maze {
     public double getEndY()        { return endY; }
     public int    getStepSize()    { return stepSize; }
     public int    getPlayerSize()  { return (int) playerSize; }
+    public void setShowEndMarker(boolean show)
+    {
+        this.showEndPoint = show;
+        draw();
+    }
 
     /**
      * Creates a standalone clone canvas showing the current maze + player state.
@@ -217,11 +224,14 @@ public class Maze {
         target.drawImage(mazeImage, 0, 0);
 
         // End marker
-        target.setFill(Color.LIMEGREEN);
-        target.fillOval(endX, endY, playerSize, playerSize);
-        target.setStroke(Color.DARKGREEN);
-        target.setLineWidth(2);
-        target.strokeOval(endX, endY, playerSize, playerSize);
+        if(showEndPoint)
+        {
+            target.setFill(Color.LIMEGREEN);
+            target.fillOval(endX, endY, playerSize, playerSize);
+            target.setStroke(Color.DARKGREEN);
+            target.setLineWidth(2);
+            target.strokeOval(endX, endY, playerSize, playerSize);
+        }
 
         // Player
         if (robotImage != null) {

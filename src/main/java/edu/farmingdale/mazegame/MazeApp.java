@@ -1,13 +1,16 @@
 package edu.farmingdale.mazegame;
 
 import javafx.application.Application;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
 
 public class MazeApp extends Application {
@@ -65,6 +68,7 @@ public class MazeApp extends Application {
                 // Determine which maze was active before switching
                 Maze activeMaze = (oldTab == tab1) ? maze1 : maze2;
                 String mazeName = (oldTab == tab1) ? "Maze 1" : "Maze 2";
+                autoTab.setContent(buildAutoPane(activeMaze, mazeName));
             }
         });
 
@@ -96,6 +100,65 @@ public class MazeApp extends Application {
         tabPane.getSelectionModel().select(tab1);
         stage.setScene(mazeScene);
         stage.requestFocus();
+    }
+
+    private Pane buildAutoPane(Maze maze, String mazeName) {
+        // ── Header ────────────────────────────────────────────────────────────
+        Label heading = new Label("Auto-Complete — " + mazeName);
+        heading.setFont(Font.font("Arial", FontWeight.BOLD, 15));
+
+        Label info = new Label("Solving from current player position  →  green marker (end)");
+        info.setStyle("-fx-text-fill:#555; -fx-font-size:12px;");
+
+        // ── Status label ──────────────────────────────────────────────────────
+        Label statusLabel = new Label("Press Solve to start.");
+        statusLabel.setStyle("-fx-font-size:13px; -fx-text-fill:#333;");
+
+        // ── Buttons ───────────────────────────────────────────────────────────
+        Button solveBtn = new Button("▶  Solve");
+        Button stopBtn  = new Button("⏹  Stop");
+
+        solveBtn.setStyle("-fx-background-color:#27ae60; -fx-text-fill:white; -fx-font-size:13px;");
+        stopBtn.setStyle( "-fx-background-color:#e74c3c; -fx-text-fill:white; -fx-font-size:13px;");
+        stopBtn.setDisable(true);
+
+        // Clone canvas — drawn on independently, original maze tab untouched
+        javafx.scene.canvas.Canvas cloneCanvas = maze.createCloneCanvas();
+        javafx.scene.layout.Pane clonePane = new javafx.scene.layout.Pane(cloneCanvas);
+
+        solveBtn.setOnAction(e -> {
+            solveBtn.setDisable(true);
+            stopBtn.setDisable(false);
+            statusLabel.setText("⏳ Solving…");
+            statusLabel.setTextFill(Color.DARKORANGE);
+
+            maze.autoSolveOnCanvas(cloneCanvas, () -> {
+                solveBtn.setDisable(false);
+                stopBtn.setDisable(true);
+                statusLabel.setText("✅ Done!");
+                statusLabel.setTextFill(Color.GREEN);
+            });
+        });
+
+        stopBtn.setOnAction(e -> {
+            maze.stopAuto();
+            solveBtn.setDisable(false);
+            stopBtn.setDisable(true);
+            statusLabel.setText("⏹ Stopped. Press Solve to resume from current position.");
+            statusLabel.setTextFill(Color.GRAY);
+        });
+
+        HBox btnRow = new HBox(12, solveBtn, stopBtn, statusLabel);
+        btnRow.setAlignment(Pos.CENTER_LEFT);
+
+        ScrollPane scroll = new ScrollPane(clonePane);
+        scroll.setStyle("-fx-border-color:#ccc; -fx-border-width:1;");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+
+        VBox root = new VBox(12, heading, info, btnRow, scroll);
+        root.setPadding(new Insets(16));
+        root.setStyle("-fx-background-color:#f5f7fa;");
+        return root;
     }
 
     public static void main(String[] args) { launch(args); }

@@ -20,8 +20,8 @@ public class Maze {
     // Maze 1
     private static final double MAZE1_SPAWN_X = 25;
     private static final double MAZE1_SPAWN_Y = 265;
-    private static final double MAZE1_END_X = 580;
-    private static final double MAZE1_END_Y = 250;
+    private static final double MAZE1_END_X = 580;//580
+    private static final double MAZE1_END_Y = 250;//250
 
     // Maze 2
     private static final double MAZE2_SPAWN_X = 25;
@@ -29,7 +29,15 @@ public class Maze {
     private static final double MAZE2_END_X = 440;
     private static final double MAZE2_END_Y = 310;
 
+    // Maze 3
+    private static final double MAZE3_SPAWN_X = 490;//490
+    private static final double MAZE3_SPAWN_Y = 30;//30
+    private static final double MAZE3_END_X = 715;
+    private static final double MAZE3_END_Y = 820;
+
     // =========================================================
+
+
 
     private static final double AUTO_PIXELS_PER_SECOND = 120.0;
 
@@ -62,11 +70,16 @@ public class Maze {
             playerY = MAZE1_SPAWN_Y;
             endX = MAZE1_END_X;
             endY = MAZE1_END_Y;
-        } else {
+        } else if (mazeFileName.equals("maze2.png")) {
             playerX = MAZE2_SPAWN_X;
             playerY = MAZE2_SPAWN_Y;
             endX = MAZE2_END_X;
             endY = MAZE2_END_Y;
+        } else {
+            playerX = MAZE3_SPAWN_X;
+            playerY = MAZE3_SPAWN_Y;
+            endX = MAZE3_END_X;
+            endY = MAZE3_END_Y;
         }
 
         if (playerFileName != null) {

@@ -27,6 +27,7 @@ public class MazeApp extends Application {
 
     private Maze maze1;
     private Maze maze2;
+    private Maze maze3;
     private boolean useCar = false;
     private TabPane tabPane;
     private Tab autoTab;
@@ -46,7 +47,7 @@ public class MazeApp extends Application {
         VBox startPane = new VBox(20, title, btnBox);
         startPane.setAlignment(Pos.CENTER);
 
-        Scene startScene = new Scene(startPane, 800, 600);
+        Scene startScene = new Scene(startPane, 1000, 800);
         stage.setScene(startScene);
         stage.setTitle("Maze Game");
         stage.show();
@@ -66,22 +67,41 @@ public class MazeApp extends Application {
 
         maze1 = new Maze("maze.png", playerFile);
         maze2 = new Maze("maze2.png", playerFile);
+        maze3 = new Maze("maze3.png", playerFile);
 
         Tab tab1 = new Tab("Maze 1", maze1.getPane());
         Tab tab2 = new Tab("Maze 2", maze2.getPane());
+        Tab tab3 = new Tab("Maze 3", maze3.getPane());
         tab1.setClosable(false);
         tab2.setClosable(false);
+        tab3.setClosable(false);
 
         autoTab = new Tab("Auto-Complete");
         autoTab.setClosable(false);
         autoTab.setDisable(true);
 
-        tabPane = new TabPane(tab1, tab2, autoTab);
+        tabPane = new TabPane(tab1, tab2, tab3, autoTab);
 
         tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+//            if (newTab == autoTab && oldTab != autoTab) {
+//                Maze activeMaze = (oldTab == tab1) ? maze1 : maze2;
+//                String mazeName = (oldTab == tab1) ? "Maze 1" : "Maze 2";
+//                autoTab.setContent(buildAutoPane(activeMaze, mazeName));
+//            }
+
             if (newTab == autoTab && oldTab != autoTab) {
-                Maze activeMaze = (oldTab == tab1) ? maze1 : maze2;
-                String mazeName = (oldTab == tab1) ? "Maze 1" : "Maze 2";
+                Maze activeMaze;
+                String mazeName;
+                if (oldTab == tab1) {
+                    activeMaze = maze1;
+                    mazeName = "Maze 1";
+                }else if (oldTab == tab2) {
+                    activeMaze = maze2;
+                    mazeName = "Maze 2";
+                }else{
+                    activeMaze = maze3;
+                    mazeName = "Maze 3";
+                }
                 autoTab.setContent(buildAutoPane(activeMaze, mazeName));
             }
         });
@@ -93,15 +113,15 @@ public class MazeApp extends Application {
             }
         });
 
-        Scene mazeScene = new Scene(tabPane, 800, 600);
-        setupSmoothMovement(mazeScene, tab1, tab2);
+        Scene mazeScene = new Scene(tabPane, 1200, 1000);
+        setupSmoothMovement(mazeScene, tab1, tab2,tab3);
 
         tabPane.getSelectionModel().select(tab1);
         stage.setScene(mazeScene);
         stage.requestFocus();
     }
 
-    private void setupSmoothMovement(Scene scene, Tab tab1, Tab tab2) {
+    private void setupSmoothMovement(Scene scene, Tab tab1, Tab tab2, Tab tab3) {
         scene.addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             KeyCode code = event.getCode();
             if (isArrow(code)) {
@@ -138,7 +158,7 @@ public class MazeApp extends Application {
                 }
 
                 Tab selected = tabPane.getSelectionModel().getSelectedItem();
-                if (selected != tab1 && selected != tab2) {
+                if (selected != tab1 && selected != tab2 && selected != tab3) {
                     return;
                 }
 
@@ -165,7 +185,15 @@ public class MazeApp extends Application {
                 dirX /= len;
                 dirY /= len;
 
-                Maze current = (selected == tab1) ? maze1 : maze2;
+//                Maze current = (selected == tab1) ? maze1 : maze2;
+                Maze current;
+                if (selected == tab1) {
+                    current = maze1;
+                }else if (selected == tab2) {
+                    current = maze2;
+                }else{
+                    current = maze3;
+                }
                 double distance = PLAYER_SPEED_PX_PER_SEC * deltaSeconds;
                 current.moveRobotBy(dirX * distance, dirY * distance);
             }

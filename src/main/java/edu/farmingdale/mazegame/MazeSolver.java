@@ -98,7 +98,10 @@ public class MazeSolver {
                 boolean isWhite  = c.getRed() > 0.85 && c.getGreen() > 0.85 && c.getBlue() > 0.85;
                 boolean isOrange = c.getRed() > 0.6 && c.getGreen() > 0.1 && c.getGreen() < 0.8 && c.getBlue() < 0.15;
                 boolean isPurple = c.getRed() > 0.3 && c.getRed() < 0.8 && c.getGreen() < 0.2 && c.getBlue() > 0.3;
-                if (!(isWhite || isOrange || isPurple)) return false;
+                boolean isBlue = c.getBlue() > 0.6 && c.getRed() < 0.35 && c.getGreen() < 0.55;
+                boolean isRed = c.getRed() > 0.6 && c.getGreen() < 0.35 && c.getBlue() < 0.35;
+                boolean isBrightPath = c.getBrightness() > 0.78;
+                if (!(isWhite || isOrange || isPurple || isBlue || isRed || isBrightPath)) return false;
             } catch (Exception e) { return false; }
         }
         return true;

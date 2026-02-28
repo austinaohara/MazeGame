@@ -162,7 +162,9 @@ public class Maze {
         stopAuto();
 
         GraphicsContext cgc = cloneCanvas.getGraphicsContext2D();
-        MazeSolver solver = new MazeSolver(mazeImage, stepSize, (int) playerSize);
+        MazeSolver solver = new MazeSolver(mazeImage, stepSize, (int) playerSize, challengerLevel);
+        double liveStartX = playerX;
+        double liveStartY = playerY;
         int[] start = resolveAutoStart(playerX, playerY);
         List<int[]> path = solver.solve(start[0], start[1], (int) endX, (int) endY);
 
@@ -174,7 +176,7 @@ public class Maze {
             return;
         }
 
-        startAutoAnimation(path, start[0], start[1], (x, y, dx, dy) -> {
+        startAutoAnimation(path, liveStartX, liveStartY, (x, y, dx, dy) -> {
             if (car != null) {
                 car.setPosition(x, y);
                 car.updateAngle(dx, dy);
@@ -282,7 +284,7 @@ public class Maze {
     public void autoSolve(Runnable onDone) {
         stopAuto();
 
-        MazeSolver solver = new MazeSolver(mazeImage, stepSize, (int) playerSize);
+        MazeSolver solver = new MazeSolver(mazeImage, stepSize, (int) playerSize, challengerLevel);
         int[] start = resolveAutoStart(playerX, playerY);
         List<int[]> path = solver.solve(start[0], start[1], (int) endX, (int) endY);
 

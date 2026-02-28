@@ -6,6 +6,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tab;
@@ -15,6 +16,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -202,27 +204,7 @@ public class MazeApp extends Application {
         autoTab.setDisable(true);
 
         tabPane = new TabPane(tab1, tab2, tab3, tab4, autoTab);
-
-        tabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
-            if (newTab == autoTab && oldTab != autoTab) {
-                Maze activeMaze;
-                String mazeName;
-                if (oldTab == tab1) {
-                    activeMaze = maze1;
-                    mazeName = "Maze 1";
-                } else if (oldTab == tab2) {
-                    activeMaze = maze2;
-                    mazeName = "Maze 2";
-                } else if (oldTab == tab3) {
-                    activeMaze = maze3;
-                    mazeName = "Maze 3";
-                } else {
-                    activeMaze = maze4;
-                    mazeName = "Challenger";
-                }
-                autoTab.setContent(buildAutoPane(activeMaze, mazeName));
-            }
-        });
+        autoTab.setContent(buildAutoPane());
 
         autoTab.setDisable(false);
 
@@ -371,12 +353,17 @@ public class MazeApp extends Application {
                 || code == KeyCode.LEFT || code == KeyCode.RIGHT;
     }
 
-    private Pane buildAutoPane(Maze maze, String mazeName) {
-        Label heading = new Label("Auto-Complete - " + mazeName);
+    private Pane buildAutoPane() {
+        Label heading = new Label("Auto-Complete");
         heading.setFont(Font.font("Arial", FontWeight.BOLD, 15));
 
-        Label info = new Label("Solving from current player position to this level's exit.");
+        Label info = new Label("Select a maze to solve from its current player position.");
         info.setStyle("-fx-text-fill:#555; -fx-font-size:12px;");
+
+        ComboBox<String> mazeSelector = new ComboBox<>();
+        mazeSelector.getItems().addAll("Maze 1", "Maze 2", "Maze 3", "Challenger");
+        mazeSelector.getSelectionModel().selectFirst();
+        mazeSelector.setStyle("-fx-font-size:13px;");
 
         Label statusLabel = new Label("Press Solve to start.");
         statusLabel.setStyle("-fx-font-size:13px; -fx-text-fill:#333;");
@@ -388,16 +375,35 @@ public class MazeApp extends Application {
         stopBtn.setStyle("-fx-background-color:#e74c3c; -fx-text-fill:white; -fx-font-size:13px;");
         stopBtn.setDisable(true);
 
-        javafx.scene.canvas.Canvas cloneCanvas = maze.createCloneCanvas();
-        Pane clonePane = new Pane(cloneCanvas);
+        final Maze[] selectedMazeRef = {maze1};
+        final javafx.scene.canvas.Canvas[] cloneCanvasRef = {maze1.createCloneCanvas()};
+        StackPane clonePane = new StackPane(cloneCanvasRef[0]);
+        clonePane.setAlignment(Pos.CENTER);
+
+        Runnable refreshClone = () -> {
+            String selectedName = mazeSelector.getValue();
+            selectedMazeRef[0] = getMazeByName(selectedName);
+            cloneCanvasRef[0] = selectedMazeRef[0].createCloneCanvas();
+            clonePane.getChildren().setAll(cloneCanvasRef[0]);
+            statusLabel.setText(selectedName + " ready. Press Solve to start.");
+            statusLabel.setTextFill(Color.web("#333"));
+            solveBtn.setDisable(false);
+            stopBtn.setDisable(true);
+        };
+
+        mazeSelector.valueProperty().addListener((obs, oldValue, newValue) -> {
+            stopAllAuto();
+            refreshClone.run();
+        });
 
         solveBtn.setOnAction(e -> {
+            stopAllAuto();
             solveBtn.setDisable(true);
             stopBtn.setDisable(false);
             statusLabel.setText("Solving...");
             statusLabel.setTextFill(Color.DARKORANGE);
 
-            maze.autoSolveOnCanvas(cloneCanvas, () -> {
+            selectedMazeRef[0].autoSolveOnCanvas(cloneCanvasRef[0], () -> {
                 solveBtn.setDisable(false);
                 stopBtn.setDisable(true);
                 statusLabel.setText("Done!");
@@ -406,24 +412,54 @@ public class MazeApp extends Application {
         });
 
         stopBtn.setOnAction(e -> {
-            maze.stopAuto();
+            selectedMazeRef[0].stopAuto();
             solveBtn.setDisable(false);
             stopBtn.setDisable(true);
             statusLabel.setText("Stopped. Press Solve to resume from current position.");
             statusLabel.setTextFill(Color.GRAY);
         });
 
-        HBox btnRow = new HBox(12, solveBtn, stopBtn, statusLabel);
-        btnRow.setAlignment(Pos.CENTER_LEFT);
+        HBox controlRow = new HBox(12, new Label("Maze:"), mazeSelector, solveBtn, stopBtn);
+        controlRow.setAlignment(Pos.CENTER_LEFT);
+
+        HBox statusRow = new HBox(statusLabel);
+        statusRow.setAlignment(Pos.CENTER_LEFT);
 
         ScrollPane scroll = new ScrollPane(clonePane);
         scroll.setStyle("-fx-border-color:#ccc; -fx-border-width:1;");
+        scroll.setFitToWidth(true);
+        scroll.setFitToHeight(true);
+        scroll.viewportBoundsProperty().addListener((obs, oldBounds, newBounds) -> {
+            clonePane.setMinSize(newBounds.getWidth(), newBounds.getHeight());
+        });
         VBox.setVgrow(scroll, Priority.ALWAYS);
 
-        VBox root = new VBox(12, heading, info, btnRow, scroll);
+        refreshClone.run();
+
+        VBox root = new VBox(12, heading, info, controlRow, statusRow, scroll);
         root.setPadding(new Insets(16));
         root.setStyle("-fx-background-color:#f5f7fa;");
         return root;
+    }
+
+    private Maze getMazeByName(String mazeName) {
+        if ("Maze 1".equals(mazeName)) {
+            return maze1;
+        }
+        if ("Maze 2".equals(mazeName)) {
+            return maze2;
+        }
+        if ("Maze 3".equals(mazeName)) {
+            return maze3;
+        }
+        return maze4;
+    }
+
+    private void stopAllAuto() {
+        maze1.stopAuto();
+        maze2.stopAuto();
+        maze3.stopAuto();
+        maze4.stopAuto();
     }
 
     public static void main(String[] args) {

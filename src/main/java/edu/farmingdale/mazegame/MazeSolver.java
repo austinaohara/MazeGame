@@ -15,11 +15,13 @@ public class MazeSolver {
     private final Image mazeImage;
     private final int stepSize;
     private final int playerSize;
+    private final boolean challengerLevel;
 
-    public MazeSolver(Image mazeImage, int stepSize, int playerSize) {
+    public MazeSolver(Image mazeImage, int stepSize, int playerSize, boolean challengerLevel) {
         this.mazeImage  = mazeImage;
         this.stepSize   = stepSize;
         this.playerSize = playerSize;
+        this.challengerLevel = challengerLevel;
     }
 
     /**
@@ -81,24 +83,34 @@ public class MazeSolver {
     private String key(int x, int y) { return x + "," + y; }
 
     private boolean isWalkable(int x, int y) {
-        if (x < 0 || y < 0
-                || x + playerSize >= (int) mazeImage.getWidth()
-                || y + playerSize >= (int) mazeImage.getHeight()) return false;
+        double hitboxInset = challengerLevel ? 2.0 : 0.0;
+        double left = x + hitboxInset;
+        double top = y + hitboxInset;
+        double right = x + playerSize - 1 - hitboxInset;
+        double bottom = y + playerSize - 1 - hitboxInset;
+
+        if (left < 0 || top < 0
+                || right >= mazeImage.getWidth()
+                || bottom >= mazeImage.getHeight()) return false;
+
         PixelReader reader = mazeImage.getPixelReader();
-        int[][] pts = {
-                {x,                  y},
-                {x + playerSize - 1, y},
-                {x,                  y + playerSize - 1},
-                {x + playerSize - 1, y + playerSize - 1},
-                {x + playerSize / 2, y + playerSize / 2}
+        double[][] pts = {
+                {left, top},
+                {right, top},
+                {left, bottom},
+                {right, bottom},
+                {(left + right) / 2.0, (top + bottom) / 2.0}
         };
-        for (int[] pt : pts) {
+        for (double[] pt : pts) {
             try {
-                Color c = reader.getColor(pt[0], pt[1]);
+                Color c = reader.getColor((int) pt[0], (int) pt[1]);
                 boolean isWhite  = c.getRed() > 0.85 && c.getGreen() > 0.85 && c.getBlue() > 0.85;
                 boolean isOrange = c.getRed() > 0.6 && c.getGreen() > 0.1 && c.getGreen() < 0.8 && c.getBlue() < 0.15;
                 boolean isPurple = c.getRed() > 0.3 && c.getRed() < 0.8 && c.getGreen() < 0.2 && c.getBlue() > 0.3;
-                if (!(isWhite || isOrange || isPurple)) return false;
+                boolean isBlue = challengerLevel && c.getBlue() > 0.6 && c.getRed() < 0.35 && c.getGreen() < 0.55;
+                boolean isRed = challengerLevel && c.getRed() > 0.6 && c.getGreen() < 0.35 && c.getBlue() < 0.35;
+                boolean isBrightPath = challengerLevel && c.getBrightness() > 0.78;
+                if (!(isWhite || isOrange || isPurple || isBlue || isRed || isBrightPath)) return false;
             } catch (Exception e) { return false; }
         }
         return true;
